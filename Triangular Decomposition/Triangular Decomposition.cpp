@@ -36,7 +36,7 @@ void DoolittleLU(MatrixXd A, MatrixXd& L, MatrixXd& U)
 	}
 }
 
-void MainElementDoolittleLU(MatrixXd A, MatrixXd& L, MatrixXd& U)
+void MainElementDoolittleLU(MatrixXd A, MatrixXd& B, MatrixXd& L, MatrixXd& U)
 {
 	if (A.rows() != A.cols())
 	{
@@ -72,22 +72,18 @@ void MainElementDoolittleLU(MatrixXd A, MatrixXd& L, MatrixXd& U)
 				index = i;
 			}
 		}
-		//M(k) = index;
+		M(k) = index;
 		if(index != k)
 		{
-			L.row(k).swap(L.row(index));
-			A.row(k).swap(A.row(index));
-			/*for(auto t = 0;t < k;++t)
+			for(auto t = 0;t < k;++t)
 			{
 				swap(L(k, t), L(index, t));
 			}
 			for(auto t = k;t < n;++t)
 			{
 				swap(A(k, t), A(index, t));
-			}*/
-			//S.row(k).swap(S.row(index));
+			}
 			swap(S(k), S(index));
-			M.row(k).swap(M.row(index));
 		}
 		
 		U(k, k) = S(k);
@@ -105,17 +101,13 @@ void MainElementDoolittleLU(MatrixXd A, MatrixXd& L, MatrixXd& U)
 			L(i, k) = S(i) / U(k, k);
 		}
 	}
-	std::cout << M << std::endl;
-	MatrixXd _L, _U;
-	_L.setZero(n, n);
-	_U.setZero(n, n);
-	for(auto i = 0;i < n;++i)
+	if (B.rows() >= n)
 	{
-		_L.row(M(i)) = L.row(i);
-		_U.row(M(i)) = U.row(i);
+		for (auto i = 0; i < n; ++i)
+		{
+			B.row(i).swap(B.row(M(i)));
+		}
 	}
-	//L = _L;
-	//U = _U;
 }
 
 void CroutLU(MatrixXd A, MatrixXd& L, MatrixXd& U)
