@@ -17,7 +17,8 @@ int main()
 	}
 	DoolittleLU(A, L, U);
 	cout << L << endl << U << endl;
-	CroutLU(A, L, U);
+	cout << "------------------" << endl;
+	MainElementDoolittleLU(A, L, U);
 	cout << L << endl << U << endl;
 	system("pause");
 }
