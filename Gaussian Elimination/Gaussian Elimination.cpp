@@ -54,12 +54,12 @@ VectorXd MainElementGaussian(MatrixXd A)
 	for (auto k = 0; k < n; ++k)
 	{
 		int index = k;
-		double max = A(index, k);
+		double max = abs(A(index, k));
 		for (auto i = k + 1; i < n; ++i)
 		{
-			if (A(i, k) > max)
+			if (abs(A(i, k)) > max)
 			{
-				max = A(i, k);
+				max = abs(A(i, k));
 				index = i;
 			}
 		}
