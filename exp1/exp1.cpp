@@ -19,11 +19,6 @@ Float A[R + S + 1][DIM], B[R + S + 1][DIM];
 void init();
 Float powerMethod();
 Float inversePowerMethod();
-/**
- * \brief 向量归一化
- * \param vec 向量指针
- * \param n 向量长度
- */
 void normalize(Float *vec, size_t n);
 void LU();
 
@@ -33,6 +28,7 @@ int main()
 
 	memcpy_s(B, sizeof B, A, sizeof A);
 	const auto lambda1 = powerMethod();//幂法求模最大的特征值
+	system("pause");
 	memcpy_s(B, sizeof B, A, sizeof A);
 	for (auto i = 0; i < DIM; ++i)//赋值计算B=（A-lamk*I）
 	{
@@ -58,11 +54,11 @@ int main()
 			B[2][i] -= u;
 		}
 		const auto lambda = inversePowerMethod() + u;//用带原点的反幂法求与miu接近的特征值
-		printf("lam%2d  = %12.12le\n", k, lambda);
+		printf("lami%02d = %12.12e\n", k, lambda);
 	}
 
 	const auto cond2 = abs(maxLambda / lam3);
-	printf("cond2  = %12.12le\n", cond2);
+	printf("cond2  = %12.12e\n", cond2);
 
 	memcpy_s(B, sizeof B, A, sizeof A);
 	LU();
@@ -71,7 +67,7 @@ int main()
 	{
 		det *= B[2][i];
 	}
-	printf("det(A) = %12.12le\n", det);
+	printf("det(A) = %12.12e\n", det);
 
 	system("pause");
 }
@@ -98,13 +94,17 @@ void init()
 	A[4][499] = 0;
 }
 
+/**
+ * \brief 幂法
+ * \return 按模最大特征值
+ */
 Float powerMethod()
 {
-	Float u[DIM];
+	Float u[DIM] = {};
 	Float y[DIM] = {};
 	Float beta1 = 0, beta2 = 0;
-	Float err = 0;
-
+	Float err;
+	int count = 0;
 	//u向量初始化
 	for (auto& i : u)
 	{
@@ -136,18 +136,23 @@ Float powerMethod()
 		err = abs(beta2 - beta1) / abs(beta2);
 		beta1 = beta2;
 		beta2 = 0;
+		++count;
 	} while (err > eps);
-
+	printf("%d\n", count);
 	return beta1;
 }
 
+/**
+ * \brief 反幂法
+ * \return 按模最小特征值
+ */
 Float inversePowerMethod()
 {
 	Float u[DIM];
 	Float y[DIM] = {};
 	Float d[DIM] = {};
 	Float beta1 = 0, beta2 = 0;
-	Float err = 0;
+	Float err;
 
 	//u向量初始化
 	for (auto& i : u)
@@ -195,6 +200,11 @@ Float inversePowerMethod()
 	return 1.0 / beta1;
 }
 
+/**
+ * \brief 向量归一化
+ * \param vec 向量指针
+ * \param n 向量长度
+ */
 void normalize(Float* vec, size_t n)
 {
 	Float s = 0;
@@ -209,6 +219,9 @@ void normalize(Float* vec, size_t n)
 	}
 }
 
+/**
+ * \brief 对B做LU分解
+ */
 void LU()
 {
 	for (auto i = 3; i <= 4; ++i)//对于k=1时对应的矩阵元素先赋值
