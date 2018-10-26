@@ -104,7 +104,6 @@ Float powerMethod()
 	Float y[DIM] = {};
 	Float beta1 = 0, beta2 = 0;
 	Float err;
-	int count = 0;
 	//u向量初始化
 	for (auto& i : u)
 	{
@@ -136,9 +135,7 @@ Float powerMethod()
 		err = abs(beta2 - beta1) / abs(beta2);
 		beta1 = beta2;
 		beta2 = 0;
-		++count;
 	} while (err > eps);
-	printf("%d\n", count);
 	return beta1;
 }
 
