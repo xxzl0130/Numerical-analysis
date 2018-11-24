@@ -16,7 +16,7 @@ int main()
 		}
 	}
 	auto X1 = SequenceGaussian(A);
-	auto X2 = mainElementGaussian(A);
+	auto X2 = MainElementGaussian(A);
 	cout << X1.transpose() << endl << X2.transpose() << endl;
 	system("pause");
 }

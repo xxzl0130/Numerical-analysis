@@ -11,8 +11,7 @@ using namespace std;
 #define DIM			10		//维度
 #define MAX_LOOP	5000	//最大迭代次数
 
-double Lambda[DIM][2];
-MatrixXd A(DIM, DIM), Q(DIM, DIM), R(DIM, DIM), X(DIM, 1);
+MatrixXd A, Q, R;
 
 //初始化A矩阵
 void init(MatrixXd& M);
@@ -25,7 +24,7 @@ MatrixXd quasiTriangular(MatrixXd A);
 //浮点数判0
 inline bool realZero(double x)
 {
-	return abs(x) < EPS * 0.1;
+	return abs(x) < EPS * 1e-2;
 }
 //符号函数
 inline double sgn(double x)
@@ -81,8 +80,7 @@ int main()
 	init(A);
 	A = checkZero(quasiTriangular(A));
 	cout << "拟上三角阵：\n" << A << endl;
-
-	MatrixXd Q, R;
+	
 	QR(A, Q, R);
 	cout << "Q矩阵为：\n" << Q << endl;
 	cout << "R矩阵为：\n" << R << endl;
@@ -104,6 +102,7 @@ int main()
 
 void init(MatrixXd& M)
 {
+	M.resize(DIM, DIM);
 	for(auto i = 1;i <= DIM;++i)
 	{
 		for(auto j = 1;j <= DIM;++j)
@@ -199,8 +198,7 @@ MatrixXd twoStepQrTrans(MatrixXd A)
 	auto n = A.rows();
 	auto m = n - 1;
 	auto k = 1,i = 0;
-	MatrixXd lambda;
-	lambda.resize(A.rows(), 2);
+	MatrixXd lambda = MatrixXd::Zero(A.rows(), 2);
 
 	while(k < MAX_LOOP)
 	{
@@ -211,6 +209,7 @@ MatrixXd twoStepQrTrans(MatrixXd A)
 			lambda(i, 1) = 0;
 			--m;
 			A = A.block(0, 0, m + 1, m + 1);//Ak=[aij]mxm
+			//cout << A << endl << endl;
 			++i;
 		}
 		else
@@ -250,6 +249,7 @@ MatrixXd twoStepQrTrans(MatrixXd A)
 			lambda.row(i++) = l.row(1);
 			m -= 2;
 			A = A.block(0, 0, m + 1, m + 1);//Ak=[aij]mxm
+			//cout << A << endl << endl;
 			++k;
 			goto step4;
 		}
@@ -425,7 +425,14 @@ VectorXd mainElementGaussian(MatrixXd A)
 
 	VectorXd X;
 	X.resize(n);
-	X(n - 1) = B(n - 1) / A(n - 1, n - 1);
+	if (abs(A(n - 1, n - 1)) < 1e-8)
+	{
+		X(n - 1) = 1;
+	}
+	else
+	{
+		X(n - 1) = B(n - 1) / A(n - 1, n - 1);
+	}
 	for (auto i = n - 2; i >= 0; --i)
 	{
 		double sum = 0;
