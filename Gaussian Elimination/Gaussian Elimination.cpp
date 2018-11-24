@@ -42,7 +42,7 @@ VectorXd SequenceGaussian(MatrixXd A)
 	return X;
 }
 
-VectorXd MainElementGaussian(MatrixXd A)
+VectorXd mainElementGaussian(MatrixXd A)
 {
 	if (A.cols() - A.rows() != 1)
 	{
