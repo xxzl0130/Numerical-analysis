@@ -1,8 +1,6 @@
-#include <cstdio>
 #include <iostream>
 #include <iomanip>
 #include <cmath>
-#include <cstring>
 #include <Eigen/Dense>
 using namespace Eigen;
 using namespace std;
@@ -24,7 +22,7 @@ MatrixXd quasiTriangular(MatrixXd A);
 //浮点数判0
 inline bool realZero(double x)
 {
-	return abs(x) < EPS * 1e-2;
+	return abs(x) <= EPS;
 }
 //符号函数
 inline double sgn(double x)
@@ -92,7 +90,7 @@ int main()
 	{
 		if(realZero(lambda(i,1)))
 		{//实根
-			cout << lambda(i, 0) << "对应的特征向量为：" 
+			cout << lambda(i, 0) << "对应的特征向量为：\n" 
 			<< eigenVector(A, lambda(i, 0)).transpose() << endl;
 		}
 	}
@@ -209,7 +207,6 @@ MatrixXd twoStepQrTrans(MatrixXd A)
 			lambda(i, 1) = 0;
 			--m;
 			A = A.block(0, 0, m + 1, m + 1);//Ak=[aij]mxm
-			//cout << A << endl << endl;
 			++i;
 		}
 		else
@@ -249,7 +246,6 @@ MatrixXd twoStepQrTrans(MatrixXd A)
 			lambda.row(i++) = l.row(1);
 			m -= 2;
 			A = A.block(0, 0, m + 1, m + 1);//Ak=[aij]mxm
-			//cout << A << endl << endl;
 			++k;
 			goto step4;
 		}
@@ -267,6 +263,7 @@ MatrixXd twoStepQrTrans(MatrixXd A)
 			++k;
 		}
 	}
+	cout << "QR迭代后的A阵为：" << A << endl;
 	return lambda;
 }
 
