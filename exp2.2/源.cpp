@@ -93,7 +93,6 @@ void Newton(double variable[], double x, double y) //牛顿法求解非线性方程组
 			|| fabs(temp[2] / v) < precision || fabs(temp[3] / w) < precision)
 			break;
 		t += temp[0]; u += temp[1]; v += temp[2]; w += temp[3];
-		//cout << k << endl;
 	}
 	variable[0] = t; variable[1] = u; variable[2] = v; variable[3] = w;
 }
@@ -264,11 +263,6 @@ void main()
 		{
 			x[i] = 0.08*i; y[j] = 0.5 + 0.05*j;
 			Newton(variable, x[i], y[j]);
-			for(auto p = 0;p < 4;++p)
-			{
-				cout << variable[p] << " ";
-			}
-			cout << endl;
 			fxy[i][j] = Lagrange(variable[0], variable[1], fz);
 			outfile << setprecision(0) << resetiosflags(ios::scientific);
 			outfile << "f(" << x[i] << "," << y[j] << ")=";
