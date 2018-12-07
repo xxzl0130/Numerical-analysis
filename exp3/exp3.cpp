@@ -60,6 +60,16 @@ Vector4d newton(Vector4d var, double x, double y);
  */
 Eigen::VectorXd MainElementGaussian(Eigen::MatrixXd A,VectorXd B);
 double lagrangeInterpolate(double t, double u);
+/**
+ * \brief 二元曲面拟合
+ * \param x 自变量x
+ * \param y 自变量y
+ * \param fxy 函数值
+ * \return 系数矩阵
+ */
+MatrixXd surfacesFit(const double x[N_X], const double y[N_Y], const double fxy[N_X][N_Y]);
+double power(double x, int a);
+double testError(const MatrixXd& c, const double x[N_X], const double y[N_Y], const double fxy[N_X][N_Y]);
 
 int main()
 {
@@ -77,7 +87,7 @@ int main()
 	{
 		for(auto j = 0;j < N_Y;++j)
 		{
-			auto var = newton(initState, x[i], y[i]);
+			auto var = newton(initState, x[i], y[j]);
 			fxy[i][j] = lagrangeInterpolate(var[0], var[1]);
 			fout << setprecision(0) << resetiosflags(ios::scientific);
 			fout << x[i] << "," << y[j] << ",";
@@ -85,6 +95,8 @@ int main()
 			fout << fxy[i][j] << endl;
 		}
 	}
+
+	cout << surfacesFit(x, y, fxy) << endl;
 
 	system("pause");
 }
@@ -126,7 +138,6 @@ Vector4d newton(Vector4d var, double x, double y)
 		{
 			if(abs(temp[i] / var[i]) < EPS)
 			{
-				cout << k << endl;
 				return var;
 			}
 		}
@@ -247,4 +258,87 @@ double lagrangeInterpolate(double t, double u)
 	}
 
 	return p;
+}
+
+MatrixXd surfacesFit(const double x[11], const double y[21], const double fxy[11][21])
+{
+	MatrixXd Crs;
+	MatrixXd f = Eigen::Map<Matrix<double, N_X, N_Y, RowMajor>>((double*)fxy);
+	
+	for(auto k = 1;;++k)
+	{
+		//构造Bij = phi_j(xi)
+		MatrixXd B;
+		B.resize(N_X, k + 1);
+		for (auto i = 0; i < N_X; ++i)
+			for (auto j = 0; j <= k; ++j)
+				B(i, j) = pow(x[i], j);
+		MatrixXd BTB = B.transpose() * B;
+		MatrixXd alpha;
+		alpha.resize(k + 1, N_Y);
+		for(auto j = 0;j < N_Y;++j)
+		{
+			VectorXd u = f.col(j);
+			alpha.col(j) = MainElementGaussian(BTB, B.transpose() * u);
+		}
+
+		//构造Gij = phi_j(yi)
+		MatrixXd G;
+		G.resize(N_Y, k + 1);
+		for (auto i = 0; i < N_Y; ++i)
+			for (auto j = 0; j <= k; ++j)
+				G(i, j) = pow(y[i], j);
+		MatrixXd GTG = G.transpose() * G;
+
+		MatrixXd beta;
+		beta.resize(k + 1, N_Y);
+		for(auto j = 0;j < N_Y;++j)
+		{
+			VectorXd q = alpha.row(0);//固定x = 0
+			beta.col(j) = MainElementGaussian(GTG, G.transpose() * q);
+		}
+
+		Crs = alpha * beta.transpose();
+		auto err = testError(Crs, x, y, fxy);
+		cout << k << " " << err << endl;
+		if (err < 1e-7)
+			break;
+	}
+
+	return Crs;
+}
+
+double power(double x, int a)
+{
+	double s = 1.0;
+	while(a)
+	{
+		if (a & 1)
+			s *= x;
+		s *= s;
+		a >>= 1;
+	}
+	return s;
+}
+
+double testError(const MatrixXd& c, const double x[11], const double y[21], const double fxy[11][21])
+{
+	double err = 0.0;
+	auto k = c.rows();
+	for(auto i = 0;i < N_X;++i)
+	{
+		for(auto j = 0;j < N_Y;++j)
+		{
+			auto p = 0.0;
+			for(auto r = 0;r < k;++r)
+			{
+				for(auto s = 0;s < k;++s)
+				{
+					p += c(r, s) * power(x[i], r) * power(y[i], s);
+				}
+			}
+			err += power(fxy[i][j] - p, 2);
+		}
+	}
+	return err;
 }

@@ -191,10 +191,19 @@ void approach(double x[], double y[], double fxy[][J], double C[I][I]) //¶þÔªÄâº
 
 		for (j = 0; j < J; j++)
 		{
-			for (i = 0; i <= k; i++)
-				for (t = 0; t < I; t++) b[i] += B[t][i] * fxy[t][j]; //B'*uj
+			for (i = 0; i <= k; i++) 
+				for (t = 0; t < I; t++) b[i] += B[t][i] * fxy[t][j];//B'*uj
+			cout << endl << endl;
 			Guass_choose(temp, b, alfa[j], k + 1); //alfaÎª×ªÖÃ
 			for (i = 0; i <= k; i++) b[i] = 0.0;
+		}
+		for(auto j = 0;j < J;++j)
+		{
+			for(auto p = 0;p <= k;++p)
+			{
+				cout << alfa[j][p] << "\t";
+			}
+			cout << endl;
 		}
 
 		for (i = 0; i <= k; i++) //free temp
