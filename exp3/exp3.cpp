@@ -265,7 +265,7 @@ MatrixXd surfacesFit(const double x[11], const double y[21], const double fxy[11
 	MatrixXd Crs;
 	MatrixXd f = Eigen::Map<Matrix<double, N_X, N_Y, RowMajor>>((double*)fxy);
 	
-	for(auto k = 1;;++k)
+	for(auto k = 0;;++k)
 	{
 		//ππ‘ÏBij = phi_j(xi)
 		MatrixXd B;
@@ -294,8 +294,8 @@ MatrixXd surfacesFit(const double x[11], const double y[21], const double fxy[11
 		beta.resize(k + 1, N_Y);
 		for(auto j = 0;j < N_Y;++j)
 		{
-			VectorXd q = alpha.row(0);//πÃ∂®x = 0
-			beta.col(j) = MainElementGaussian(GTG, G.transpose() * q);
+			VectorXd q = alpha.row(0);
+			beta.col(j) = MainElementGaussian(GTG, G.row(j));
 		}
 
 		Crs = alpha * beta.transpose();
@@ -315,7 +315,7 @@ double power(double x, int a)
 	{
 		if (a & 1)
 			s *= x;
-		s *= s;
+		x *= x;
 		a >>= 1;
 	}
 	return s;
@@ -334,7 +334,7 @@ double testError(const MatrixXd& c, const double x[11], const double y[21], cons
 			{
 				for(auto s = 0;s < k;++s)
 				{
-					p += c(r, s) * power(x[i], r) * power(y[i], s);
+					p += c(r, s) * power(x[i], r) * power(y[j], s);
 				}
 			}
 			err += power(fxy[i][j] - p, 2);
