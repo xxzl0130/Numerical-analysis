@@ -70,11 +70,10 @@ double lagrangeInterpolate(double t, double u);
 MatrixXd surfacesFit(const double x[N_X], const double y[N_Y], const double fxy[N_X][N_Y]);
 double power(double x, int a);
 double testError(const MatrixXd& c, const double x[N_X], const double y[N_Y], const double fxy[N_X][N_Y]);
-
+fstream fout;
 int main()
 {
-	fstream fout;
-	fout.open("data.csv", ios_base::out);
+	fout.open("output.txt", ios_base::out);
 
 	for(auto i = 0;i < N_X;++i)
 		x[i] = H_X * i;
@@ -96,7 +95,9 @@ int main()
 		}
 	}
 
-	cout << surfacesFit(x, y, fxy) << endl;
+	fout << "Crs:\n";
+	fout << setprecision(12) << setiosflags(ios::scientific);
+	fout << surfacesFit(x, y, fxy) << endl;
 
 	system("pause");
 }
@@ -264,7 +265,7 @@ MatrixXd surfacesFit(const double x[11], const double y[21], const double fxy[11
 {
 	MatrixXd Crs;
 	MatrixXd f = Eigen::Map<Matrix<double, N_X, N_Y, RowMajor>>((double*)fxy);
-	
+	fout << "k,delta\n";
 	for(auto k = 0;;++k)
 	{
 		//¹¹ÔìBij = phi_j(xi)
@@ -300,7 +301,10 @@ MatrixXd surfacesFit(const double x[11], const double y[21], const double fxy[11
 
 		Crs = alpha * beta.transpose();
 		auto err = testError(Crs, x, y, fxy);
-		cout << k << " " << err << endl;
+		fout << setprecision(0) << resetiosflags(ios::scientific);
+		fout << k << " " ;
+		fout << setprecision(12) << setiosflags(ios::scientific);
+		fout << err << endl;
 		if (err < 1e-7)
 			break;
 	}
