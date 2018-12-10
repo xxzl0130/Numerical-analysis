@@ -65,14 +65,24 @@ double lagrangeInterpolate(double t, double u);
  * \param x 自变量x
  * \param y 自变量y
  * \param fxy 函数值
+ * \param k 拟合次数
  * \return 系数矩阵
  */
-MatrixXd surfacesFit(const double x[N_X], const double y[N_Y], const double fxy[N_X][N_Y]);
+MatrixXd surfacesFit(const double x[N_X], const double y[N_Y], const double fxy[N_X][N_Y],int k);
 double power(double x, int a);
 double testError(const MatrixXd& c, const double x[N_X], const double y[N_Y], const double fxy[N_X][N_Y]);
-fstream fout;
+/**
+ * \brief p(x,y)拟合函数
+ * \param c 系数矩阵
+ * \param x x
+ * \param y y
+ * \return p(x,y)
+ */
+double p(const MatrixXd& c, double x, double y);
+
 int main()
 {
+	fstream fout;
 	fout.open("output.txt", ios_base::out);
 
 	for(auto i = 0;i < N_X;++i)
@@ -95,11 +105,38 @@ int main()
 		}
 	}
 
-	fout << "Crs:\n";
 	fout << setprecision(12) << setiosflags(ios::scientific);
-	fout << surfacesFit(x, y, fxy) << endl;
+	fout << endl << "k,delta\n";
+	MatrixXd Crs;
+	for(auto k = 0;;++k)
+	{
+		Crs = surfacesFit(x, y, fxy, k);
+		auto err = testError(Crs, x, y, fxy);
+		fout << setprecision(0) << resetiosflags(ios::scientific);
+		fout << k << ",";
+		fout << setprecision(12) << setiosflags(ios::scientific);
+		fout << err << endl;
+		if (err < 1e-7)
+			break;
+	}
+	fout << endl << "Crs:\n" << Crs << endl;
 
-	system("pause");
+	fout << endl << "x*,y*,f,p" << endl;
+	for(auto i = 1;i <= 8;++i)
+	{
+		auto x = 0.1 * i;
+		for(auto j = 1;j <= 5;++j)
+		{
+			auto y = 0.5 + 0.2 * j;
+			auto var = newton(initState, x, y);
+			auto fxy = lagrangeInterpolate(var[0], var[1]);
+			auto pxy = p(Crs, x, y);
+			fout << setprecision(0) << resetiosflags(ios::scientific);
+			fout << x << "," << y << ",";
+			fout << setprecision(12) << setiosflags(ios::scientific);
+			fout << fxy << "," << pxy << endl;
+		}
+	}
 }
 
 Vector4d F(Vector6d X)
@@ -261,54 +298,42 @@ double lagrangeInterpolate(double t, double u)
 	return p;
 }
 
-MatrixXd surfacesFit(const double x[11], const double y[21], const double fxy[11][21])
+MatrixXd surfacesFit(const double x[11], const double y[21], const double fxy[11][21], int k)
 {
 	MatrixXd Crs;
 	MatrixXd f = Eigen::Map<Matrix<double, N_X, N_Y, RowMajor>>((double*)fxy);
-	fout << "k,delta\n";
-	for(auto k = 0;;++k)
+	//构造Bij = phi_j(xi)
+	MatrixXd B;
+	B.resize(N_X, k + 1);
+	for (auto i = 0; i < N_X; ++i)
+		for (auto j = 0; j <= k; ++j)
+			B(i, j) = pow(x[i], j);
+	MatrixXd BTB = B.transpose() * B;
+	MatrixXd alpha;
+	alpha.resize(k + 1, N_Y);
+	for (auto j = 0; j < N_Y; ++j)
 	{
-		//构造Bij = phi_j(xi)
-		MatrixXd B;
-		B.resize(N_X, k + 1);
-		for (auto i = 0; i < N_X; ++i)
-			for (auto j = 0; j <= k; ++j)
-				B(i, j) = pow(x[i], j);
-		MatrixXd BTB = B.transpose() * B;
-		MatrixXd alpha;
-		alpha.resize(k + 1, N_Y);
-		for(auto j = 0;j < N_Y;++j)
-		{
-			VectorXd u = f.col(j);
-			alpha.col(j) = MainElementGaussian(BTB, B.transpose() * u);
-		}
-
-		//构造Gij = phi_j(yi)
-		MatrixXd G;
-		G.resize(N_Y, k + 1);
-		for (auto i = 0; i < N_Y; ++i)
-			for (auto j = 0; j <= k; ++j)
-				G(i, j) = pow(y[i], j);
-		MatrixXd GTG = G.transpose() * G;
-
-		MatrixXd beta;
-		beta.resize(k + 1, N_Y);
-		for(auto j = 0;j < N_Y;++j)
-		{
-			VectorXd q = alpha.row(0);
-			beta.col(j) = MainElementGaussian(GTG, G.row(j));
-		}
-
-		Crs = alpha * beta.transpose();
-		auto err = testError(Crs, x, y, fxy);
-		fout << setprecision(0) << resetiosflags(ios::scientific);
-		fout << k << " " ;
-		fout << setprecision(12) << setiosflags(ios::scientific);
-		fout << err << endl;
-		if (err < 1e-7)
-			break;
+		VectorXd u = f.col(j);
+		alpha.col(j) = MainElementGaussian(BTB, B.transpose() * u);
 	}
 
+	//构造Gij = phi_j(yi)
+	MatrixXd G;
+	G.resize(N_Y, k + 1);
+	for (auto i = 0; i < N_Y; ++i)
+		for (auto j = 0; j <= k; ++j)
+			G(i, j) = pow(y[i], j);
+	MatrixXd GTG = G.transpose() * G;
+
+	MatrixXd beta;
+	beta.resize(k + 1, N_Y);
+	for (auto j = 0; j < N_Y; ++j)
+	{
+		VectorXd q = alpha.row(0);
+		beta.col(j) = MainElementGaussian(GTG, G.row(j));
+	}
+
+	Crs = alpha * beta.transpose();
 	return Crs;
 }
 
@@ -333,16 +358,22 @@ double testError(const MatrixXd& c, const double x[11], const double y[21], cons
 	{
 		for(auto j = 0;j < N_Y;++j)
 		{
-			auto p = 0.0;
-			for(auto r = 0;r < k;++r)
-			{
-				for(auto s = 0;s < k;++s)
-				{
-					p += c(r, s) * power(x[i], r) * power(y[j], s);
-				}
-			}
-			err += power(fxy[i][j] - p, 2);
+			err += power(fxy[i][j] - p(c, x[i], y[j]), 2);
 		}
 	}
 	return err;
+}
+
+double p(const MatrixXd& c, double x, double y)
+{
+	auto p = 0.0;
+	auto k = c.rows();
+	for (auto r = 0; r < k; ++r)
+	{
+		for (auto s = 0; s < k; ++s)
+		{
+			p += c(r, s) * power(x, r) * power(y, s);
+		}
+	}
+	return p;
 }
